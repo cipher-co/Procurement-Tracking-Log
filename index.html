@@ -947,7 +947,9 @@ function formatNumber(input) {
 }
 
 function parseNumber(str) {
-  return parseFloat((str || '0').replace(/,/g, '')) || 0;
+  if (str === null || str === undefined || str === '') return 0;
+  if (typeof str === 'number') return str;
+  return parseFloat(String(str).replace(/,/g, '')) || 0;
 }
 
 // ============================================================
