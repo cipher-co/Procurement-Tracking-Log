@@ -841,8 +841,10 @@ async function loadAllProjects() {
   showLoading('กำลังโหลดโครงการทั้งหมด...');
   const res = await apiCall('getAll');
   hideLoading();
+  console.log('API getAll response:', JSON.stringify(res).slice(0, 500));
   if (res.ok) {
     projects = res.projects || [];
+    console.log('projects loaded:', projects.length, projects.map(p => p.name));
   } else {
     showToast('โหลดข้อมูลไม่สำเร็จ: ' + (res.error || ''), 'error');
   }
@@ -1578,11 +1580,12 @@ function resetForm() {
 // ============================================================
 function renderProjects(filter) {
   let list = [...projects];
-  // DEBUG: แสดงข้อมูลที่ได้จาก API
-  console.log('renderProjects: projects =', JSON.stringify(list.slice(0,2)));
-  if (list.length > 0) {
-    showToast(`โหลด ${list.length} โครงการ: "${list[0].name || '(ไม่มีชื่อ)'}"`, '');
-  }
+  console.log('DEBUG projects:', list);
+
+  // อัปเดต count จาก list จริง
+  document.getElementById('projectCount').textContent = `${list.length} โครงการ`;
+  const container = document.getElementById('projectsContainer');
+
   if (filter) {
     const q = filter.toLowerCase();
     list = list.filter(p =>
@@ -1591,8 +1594,6 @@ function renderProjects(filter) {
       (p.approveAuth || '').toLowerCase().includes(q)
     );
   }
-  document.getElementById('projectCount').textContent = `${list.length} โครงการ`;
-  const container = document.getElementById('projectsContainer');
 
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state">
