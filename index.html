@@ -1578,6 +1578,11 @@ function resetForm() {
 // ============================================================
 function renderProjects(filter) {
   let list = [...projects];
+  // DEBUG: แสดงข้อมูลที่ได้จาก API
+  console.log('renderProjects: projects =', JSON.stringify(list.slice(0,2)));
+  if (list.length > 0) {
+    showToast(`โหลด ${list.length} โครงการ: "${list[0].name || '(ไม่มีชื่อ)'}"`, '');
+  }
   if (filter) {
     const q = filter.toLowerCase();
     list = list.filter(p =>
