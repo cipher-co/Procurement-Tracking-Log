@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrackingLog - ระบบติดตามงานจัดซื้อจัดจ้าง สบด.ฝอค.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+  * { font-family: 'Prompt', sans-serif; box-sizing: border-box; }
+  :root {
+    --navy: #1565C0;
+    --navy-dark: #0d47a1;
+    --navy-light: #04befe;
+    --navy-bg: #e3f2fd;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #1a2332;
+    --danger: #dc3545;
+    --success: #198754;
+    --warning: #e67e22;
+    --info: #0d6efd;
+    --primary-gradient: linear-gradient(to top, #4481eb 0%, #04befe 100%);
+    --excel-gradient: linear-gradient(to top, #b3ffab 0%, #12fff7 100%);
+    --border-radius: 10px;
+  }
+  body { background: #f5f8ff; color: #1a2332; font-size: 14px; }
+  
+  /* HEADER */
+  .app-header {
+    background: linear-gradient(135deg, #0d47a1 0%, #1565C0 40%, #4481eb 75%, #04befe 100%);
+    color: white; padding: 0 32px; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(15,35,71,0.25);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { display: flex; flex-direction: column; }
+  .header-brand .title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-brand .subtitle { font-size: 11px; opacity: 0.75; font-weight: 300; margin-top: -2px; }
+  .header-nav { display: flex; gap: 8px; align-items: center; }
+  .btn-header { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-size: 13px;
+    font-family: 'Prompt', sans-serif; transition: all 0.2s; font-weight: 400; }
+  .btn-header:hover { background: rgba(255,255,255,0.25); }
+  .btn-header.active { background: white; color: #1565C0; font-weight: 500; }
+  .btn-back { background: none; border: none; color: white; cursor: pointer; font-family: 'Prompt', sans-serif;
+    display: flex; align-items: center; gap: 6px; font-size: 14px; opacity: 0.85; transition: opacity 0.2s; }
+  .btn-back:hover { opacity: 1; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* PROJECT LIST PAGE */
+  .page-list { padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .page-list-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #1a2332; }
+  .project-count { font-size: 13px; color: var(--gray-500); margin-top: 2px; font-weight: 400; }
+  .btn-primary { background: linear-gradient(to top, #4481eb 0%, #04befe 100%);
+    color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    font-family: 'Prompt', sans-serif; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(68,129,235,0.4); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(68,129,235,0.5); }
+  .search-box { background: white; border: 1px solid var(--gray-200); border-radius: 8px;
+    padding: 10px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .search-box input { border: none; outline: none; flex: 1; font-family: 'Prompt', sans-serif;
+    font-size: 14px; color: var(--gray-700); background: transparent; }
+  .search-box input::placeholder { color: var(--gray-400); }
+  .empty-state { text-align: center; padding: 80px 20px; }
+  .empty-icon { width: 60px; height: 60px; margin: 0 auto 16px; opacity: 0.3; }
+  .empty-title { color: var(--gray-500); font-size: 15px; margin-bottom: 20px; }
+  .btn-outline { background: white; border: 1.5px solid var(--gray-300); color: var(--gray-700);
+    padding: 9px 20px; border-radius: 8px; cursor: pointer; font-family: 'Prompt', sans-serif;
+    font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.2s; }
+  .btn-outline:hover { border-color: #4481eb; color: #4481eb; }
+
+  /* PROJECT CARDS */
+  .projects-grid { display: grid; gap: 12px; }
+  .project-card { background: white; border-radius: 10px; border: 1px solid var(--gray-200);
+    padding: 20px 24px; cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .project-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(68,129,235,0.15);
+    border-color: #4481eb; }
+  .project-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .project-card-title { font-size: 15px; font-weight: 600; color: #1a2332; flex: 1; margin-right: 16px; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-orange { background: #ffedd5; color: #9a3412; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .project-card-meta { display: flex; gap: 24px; font-size: 12px; color: var(--gray-500); }
+  .project-card-meta span { display: flex; align-items: center; gap: 4px; }
+  .project-card-progress { margin-top: 12px; }
+  .progress-bar-wrap { background: var(--gray-100); border-radius: 4px; height: 5px; }
+  .progress-bar-fill { background: linear-gradient(to right, #4481eb 0%, #04befe 100%);
+    border-radius: 4px; height: 5px; transition: width 0.5s ease; }
+
+  /* FORM PAGE */
+  .page-form { padding: 28px 32px; max-width: 1300px; margin: 0 auto; }
+  .form-section { background: white; border-radius: 12px; border: 1px solid var(--gray-200);
+    padding: 28px 32px; margin-bottom: 20px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .section-title { font-size: 17px; font-weight: 700; color: #1a2332;
+    border-left: 4px solid #4481eb; padding-left: 12px; margin-bottom: 24px; }
+  
+  /* ── DASHBOARD: GLASSMORPHISM PREMIUM ── */
+
+  /* Outer wrapper — mesh gradient backdrop */
+  #dashboardSection {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 0% 0%,   rgba(68,129,235,0.22) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 0%,  rgba(4,190,254,0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(91,156,246,0.14) 0%, transparent 60%),
+      linear-gradient(135deg, #e8f0fe 0%, #f0f8ff 40%, #e6f3ff 70%, #dbeafe 100%);
+    border: 1px solid rgba(255,255,255,0.72) !important;
+    border-radius: 28px !important;
+    padding: 0 !important;
+    box-shadow:
+      0 8px 40px rgba(68,129,235,0.10),
+      0 2px 0 rgba(255,255,255,0.9) inset !important;
+    overflow: hidden;
+  }
+
+  /* Inner padding wrapper */
+  .dash-inner {
+    padding: 32px 32px 24px;
+    position: relative; z-index: 1;
+  }
+
+  /* Blurred orb decorations */
+  #dashboardSection::before {
+    content: '';
+    position: absolute; top: -40px; left: -40px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(68,129,235,0.18) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none; filter: blur(30px);
+  }
+  #dashboardSection::after {
+    content: '';
+    position: absolute; bottom: -30px; right: -30px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(4,190,254,0.16) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none; filter: blur(24px);
+  }
+
+  /* Title */
+  .dash-section-title {
+    font-size: 18px; font-weight: 700; color: #1D1D1F;
+    letter-spacing: -0.2px; margin-bottom: 22px;
+    display: flex; align-items: center; gap: 10px;
+    position: relative; z-index: 1;
+  }
+  .dash-section-title-bar {
+    width: 4px; height: 18px; border-radius: 99px;
+    background: linear-gradient(to bottom, #4481eb, #04befe);
+    flex-shrink: 0;
+  }
+
+  /* KPI Grid */
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+    position: relative; z-index: 1;
+  }
+
+  /* Glass Card */
+  .dash-card {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(16px) saturate(1.6);
+    -webkit-backdrop-filter: blur(16px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.40);
+    border-radius: 20px;
+    padding: 22px 20px 18px;
+    box-shadow:
+      0 8px 32px rgba(31,38,135,0.07),
+      0 1px 0 rgba(255,255,255,0.8) inset;
+    transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+    cursor: default; position: relative; overflow: hidden;
+  }
+  .dash-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 16px 40px rgba(31,38,135,0.12),
+      0 1px 0 rgba(255,255,255,0.9) inset;
+  }
+  /* Top shimmer line */
+  .dash-card::before {
+    content: '';
+    position: absolute; top: 0; left: 16px; right: 16px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent);
+  }
+
+  /* Deadline card states */
+  .dash-card.dash-card-overdue  {
+    background: rgba(255,241,241,0.65);
+    border-color: rgba(185,28,28,0.20);
+    box-shadow: 0 8px 32px rgba(185,28,28,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+  }
+  .dash-card.dash-card-upcoming {
+    background: rgba(255,247,237,0.65);
+    border-color: rgba(180,83,9,0.20);
+    box-shadow: 0 8px 32px rgba(180,83,9,0.06), 0 1px 0 rgba(255,255,255,0.8) inset;
+  }
+
+  /* Card icon pill */
+  .dash-card-icon {
+    width: 36px; height: 36px; border-radius: 11px;
+    background: rgba(255,255,255,0.70);
+    border: 1px solid rgba(68,129,235,0.12);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(68,129,235,0.10);
+  }
+
+  /* Label */
+  .dash-card-label {
+    font-size: 12px; color: #6e6e73; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 7px;
+  }
+
+  /* Main value */
+  .dash-card-value {
+    font-size: 30px; font-weight: 800; color: #1D1D1F;
+    letter-spacing: -0.8px; line-height: 1.0;
+  }
+  .dash-card-value.smaller { font-size: 24px; letter-spacing: -0.4px; }
+
+  /* Sub-caption */
+  .dash-card-sub { font-size: 12px; color: #8e8e93; margin-top: 5px; }
+
+  /* Deadline badge pill */
+  .dash-card-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 10px; font-weight: 700; margin-top: 8px;
+    letter-spacing: 0.2px;
+  }
+  .dash-badge-safe    { background: rgba(34,197,94,0.12);  color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
+  .dash-badge-warning { background: rgba(234,88,12,0.10);  color: #c2410c; border: 1px solid rgba(234,88,12,0.2); }
+  .dash-badge-danger  { background: rgba(220,38,38,0.10);  color: #b91c1c; border: 1px solid rgba(220,38,38,0.2); }
+
+  /* Progress strip — glass */
+  .dash-progress {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(16px) saturate(1.5);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,0.40);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-top: 0;
+    box-shadow: 0 4px 20px rgba(31,38,135,0.05), 0 1px 0 rgba(255,255,255,0.8) inset;
+    position: relative; z-index: 1;
+  }
+  .dash-progress-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; margin-bottom: 10px;
+    color: #3a3a3c; font-weight: 600;
+  }
+  .dash-progress-pct {
+    font-size: 14px; font-weight: 800;
+    background: linear-gradient(135deg, #4481eb, #04befe);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .dash-progress-bar {
+    background: rgba(68,129,235,0.10);
+    border-radius: 99px; height: 7px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  .dash-progress-fill {
+    background: linear-gradient(to right, #4481eb 0%, #04befe 100%);
+    border-radius: 99px; height: 100%;
+    transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 0 10px rgba(68,129,235,0.35);
+  }
+
+  /* Bottom row: progress + alert side by side */
+  .dash-bottom-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: stretch;
+    position: relative; z-index: 1;
+  }
+  .dash-bottom-row > .dash-progress { flex: 1; }
+
+  /* Alert strip */
+  .deadline-alert {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-radius: 14px;
+    font-size: 12.5px; font-weight: 500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: relative; z-index: 1;
+  }
+  .deadline-alert.warning {
+    background: rgba(255,247,237,0.80); color: #92400e;
+    border: 1px solid rgba(180,83,9,0.18);
+    box-shadow: 0 4px 16px rgba(180,83,9,0.06);
+  }
+  .deadline-alert.danger {
+    background: rgba(255,241,242,0.80); color: #9f1239;
+    border: 1px solid rgba(185,28,28,0.18);
+    box-shadow: 0 4px 16px rgba(185,28,28,0.07);
+  }
+  .deadline-alert.safe {
+    background: rgba(240,253,244,0.80); color: #14532d;
+    border: 1px solid rgba(22,163,74,0.18);
+    box-shadow: 0 4px 16px rgba(22,163,74,0.06);
+  }
+
+  @media (max-width: 1024px) {
+    .dashboard-cards { grid-template-columns: repeat(2, 1fr); }
+    .dash-bottom-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .dashboard-cards { grid-template-columns: 1fr; }
+    .dash-inner { padding: 20px 16px 18px; }
+  }
+
+  @media (max-width: 1024px) { .dashboard-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .dashboard-cards { grid-template-columns: 1fr 1fr; gap: 12px; } .dash-card-value { font-size: 20px; } }
+
+  /* FORM FIELDS */
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 13px; font-weight: 500; color: var(--gray-700); }
+  .form-label .required { color: var(--danger); margin-left: 2px; }
+  .form-input { border: 1.5px solid var(--gray-300); border-radius: 8px; padding: 9px 12px;
+    font-family: 'Prompt', sans-serif; font-size: 13px; color: var(--gray-800);
+    background: white; outline: none; transition: border-color 0.2s; width: 100%; }
+  .form-input:focus { border-color: #4481eb; box-shadow: 0 0 0 3px rgba(68,129,235,0.15); }
+  .form-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,53,69,0.1); }
+  .form-input::placeholder { color: var(--gray-400); }
+  .input-with-suffix { position: relative; }
+  .input-suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; color: var(--gray-500); white-space: nowrap; pointer-events: none; }
+  .input-with-suffix .form-input { padding-right: 120px; }
+  .input-note { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  .date-range-wrap { display: flex; align-items: center; gap: 8px; }
+  .date-range-sep { color: var(--gray-400); font-size: 12px; white-space: nowrap; }
+  select.form-input { cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23adb5bd' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  textarea.form-input { resize: vertical; min-height: 90px; }
+
+
+  /* TASK TABLE */
+  .task-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--gray-200); }
+  .task-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  .task-table thead tr { background: linear-gradient(to right, #4481eb 0%, #04befe 100%); }
+  .task-table thead th { color: white; padding: 12px 14px; text-align: left; font-size: 13px;
+    font-weight: 600; white-space: nowrap; }
+  .task-table tbody tr.task-main { background: white; }
+  .task-table tbody tr.task-main:hover { background: var(--gray-50); }
+  .task-table tbody tr.task-sub { background: #f0f7ff; }
+  .task-table tbody tr.task-sub:hover { background: #ddeffc; }
+  .task-table tbody tr.task-subtask-user { background: #fffdf5; border-left: 3px solid #e8c94a; }
+  .task-table tbody tr.task-subtask-user:hover { background: #fffbea; }
+  .task-table tbody tr.task-main-user { background: #fff; border-left: 3px solid #4481eb; }
+  .task-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+  .task-num { font-size: 12px; color: var(--gray-500); font-weight: 600; white-space: nowrap; }
+  .task-name { font-size: 13px; font-weight: 600; color: #1a2332; }
+  .task-name-sub { font-size: 12px; color: var(--gray-600); }
+  .task-name-user { font-size: 12px; color: var(--gray-700); font-style: italic; }
+  .task-add-sub { display: flex; align-items: center; gap: 6px; color: #4481eb;
+    font-size: 12px; cursor: pointer; padding: 6px 14px 6px 0; border: none; background: none;
+    font-family: 'Prompt', sans-serif; font-weight: 500; transition: color 0.2s; }
+  .task-add-sub:hover { color: #0d47a1; }
+  .add-sub-row td { padding: 4px 12px 8px; background: white; border-bottom: 1px solid var(--gray-200); }
+  .task-table-input { border: 1.5px solid var(--gray-200); border-radius: 6px; padding: 6px 10px;
+    font-family: 'Prompt', sans-serif; font-size: 12px; color: var(--gray-800);
+    background: white; outline: none; transition: border-color 0.2s; width: 100%; }
+  .task-table-input:focus { border-color: #4481eb; box-shadow: 0 0 0 2px rgba(68,129,235,0.15); }
+  .task-table-input.error { border-color: var(--danger); animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  select.task-table-input { cursor: pointer; appearance: none; padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23adb5bd' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center; }
+
+
+  /* ── TASK TABLE ROW ACTIONS ── */
+  .btn-add-sub-inline {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: none; border: 1.5px solid #4481eb; color: #4481eb;
+    border-radius: 6px; padding: 3px 9px; font-size: 11px; font-weight: 600;
+    font-family: 'Prompt', sans-serif; cursor: pointer; white-space: nowrap;
+    transition: all 0.18s; line-height: 1.4;
+  }
+  .btn-add-sub-inline:hover { background: #4481eb; color: white; transform: none; }
+  .btn-add-main-row {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; background: none; border: 1.5px dashed #4481eb; color: #4481eb;
+    border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600;
+    font-family: 'Prompt', sans-serif; cursor: pointer; margin-top: 12px;
+    transition: all 0.2s;
+  }
+  .btn-add-main-row:hover { background: #eef4ff; border-style: solid; }
+  .task-num-input {
+    border: none; background: transparent; outline: none; width: 52px;
+    font-family: 'Prompt', sans-serif; font-size: 12px; font-weight: 600;
+    color: #6c757d; text-align: center; padding: 3px 4px; border-radius: 4px;
+    cursor: text; transition: background 0.15s, border 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .task-num-input:focus { background: white; border-color: #4481eb;
+    box-shadow: 0 0 0 2px rgba(68,129,235,0.12); color: #1a2332; }
+  .task-num-input.main-task { color: #1a2332; font-size: 13px; }
+  .task-num-input.user-task { color: #6c757d; font-size: 12px; }
+  .add-sub-row td { padding: 0; border-bottom: none !important; }
+
+  /* Auto-grow remark textarea */
+  .task-remark-ta {
+    resize: none;
+    overflow: hidden;
+    min-height: 32px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+    vertical-align: top;
+    display: block;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    box-sizing: border-box;
+  }
+
+  /* BUTTONS */
+  .btn-success { background: #91f086;
+    color: #1a4a18; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer;
+    font-family: 'Prompt', sans-serif; font-size: 14px; font-weight: 600;
+    transition: all 0.2s; box-shadow: 0 2px 10px rgba(145,240,134,0.35); }
+  .btn-success:hover { background: #7de872; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(145,240,134,0.5); }
+  .btn-secondary { background: white; border: 1.5px solid var(--gray-300); color: var(--gray-700);
+    padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    font-family: 'Prompt', sans-serif; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--gray-500); }
+  .btn-danger-sm { background: none; border: none; color: var(--danger); cursor: pointer;
+    font-size: 12px; padding: 2px 6px; border-radius: 4px; transition: background 0.2s;
+    font-family: 'Prompt', sans-serif; }
+  .btn-danger-sm:hover { background: #fee2e2; }
+  .action-bar { display: flex; gap: 12px; align-items: center; padding-top: 4px; }
+
+  /* DEADLINE BADGE */
+  .deadline-badge { display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+  .deadline-badge.overdue { background: #fee2e2; color: #991b1b; }
+  .deadline-badge.upcoming { background: #fff3cd; color: #856404; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy-dark); color: white;
+    padding: 14px 20px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 9999; transform: translateY(80px);
+    opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #166534; }
+  .toast.error { background: #991b1b; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .form-grid { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-cards { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .page-form { padding: 16px; }
+    .form-section { padding: 20px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .dashboard-cards { grid-template-columns: repeat(2, 1fr); }
+  }
+
+
+  /* ── FLATPICKR THAI OVERRIDES ── */
+  .flatpickr-input { cursor: pointer !important; }
+  .flatpickr-input.active { border-color: #4481eb !important; box-shadow: 0 0 0 3px rgba(68,129,235,0.15) !important; }
+  .flatpickr-calendar { font-family: 'Prompt', sans-serif !important; border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(68,129,235,0.2) !important; border: 1px solid #e0eaff !important; }
+  .flatpickr-month { background: linear-gradient(to right, #4481eb, #04befe) !important; border-radius: 12px 12px 0 0 !important; }
+  .flatpickr-current-month { color: white !important; }
+  .flatpickr-current-month .flatpickr-monthDropdown-months { color: white !important; background: transparent !important; }
+  .flatpickr-current-month input.cur-year { color: white !important; }
+  .flatpickr-weekday { color: #4481eb !important; font-weight: 600 !important; font-size: 12px !important; }
+  .flatpickr-day.selected { background: #4481eb !important; border-color: #4481eb !important; }
+  .flatpickr-day.selected:hover { background: #0d47a1 !important; }
+  .flatpickr-day:hover { background: #e8f4fe !important; }
+  .flatpickr-day.today { border-color: #4481eb !important; color: #4481eb !important; font-weight: 700 !important; }
+  .flatpickr-day.today.selected { color: white !important; }
+  .flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { fill: white !important; }
+  .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: rgba(255,255,255,0.7) !important; }
+  /* Table cell flatpickr inputs */
+  .fp-wrap { position: relative; display: flex; align-items: center; }
+  .fp-wrap .fp-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; z-index: 1; }
+  .fp-wrap input { padding-left: 28px !important; min-width: 120px; }
+  /* Form-level flatpickr inputs */
+  .fp-form-wrap { position: relative; }
+  .fp-form-wrap .fp-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; z-index: 1; }
+  .fp-form-wrap input { padding-left: 36px !important; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--gray-100); }
+  ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.75);backdrop-filter:blur(6px);z-index:9998;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#4481eb;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+  <div id="loadingMsg" style="font-size:14px;color:#4481eb;font-weight:600;font-family:'Prompt',sans-serif">กำลังโหลด...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<header class="app-header" id="appHeader">
+  <div class="header-brand">
+    <span class="title">TrackingLog</span>
+    <span class="subtitle">ระบบติดตามงานจัดซื้อจัดจ้าง สบด.ฝอค.</span>
+  </div>
+  <div class="header-nav" id="headerNav">
+    <button class="btn-header active" onclick="showPage('list')">โครงการทั้งหมด</button>
+  </div>
+</header>
+
+<!-- PAGE: LIST -->
+<div class="page active" id="page-list">
+  <div class="page-list">
+    <div class="page-list-header">
+      <div>
+        <div class="page-title">โครงการทั้งหมด</div>
+        <div class="project-count" id="projectCount">0 โครงการ</div>
+      </div>
+      <button class="btn-primary" onclick="showPage('form')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        สร้างโครงการใหม่
+      </button>
+    </div>
+    <div class="search-box">
+      <svg width="16" height="16" fill="none" stroke="#adb5bd" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="ค้นหาชื่อโครงการ, วิธีจัดหา, ผู้รับผิดชอบ..." oninput="filterProjects(this.value)" id="searchInput">
+    </div>
+    <div id="projectsContainer">
+      <div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="1.5">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        <div class="empty-title">ยังไม่มีโครงการในระบบ</div>
+        <button class="btn-outline" onclick="showPage('form')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          สร้างโครงการแรก
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: FORM -->
+<div class="page" id="page-form">
+  <div class="page-form">
+
+    <!-- DASHBOARD -->
+    <div class="form-section" id="dashboardSection" style="display:none">
+    <div class="dash-inner">
+
+      <div class="dash-section-title">
+        <span class="dash-section-title-bar"></span>
+        Dashboard สรุปงานจัดซื้อจัดจ้าง
+      </div>
+
+      <div class="dashboard-cards">
+
+        <!-- Card 1: Budget -->
+        <div class="dash-card">
+          <div class="dash-card-icon">
+            <svg width="18" height="18" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div class="dash-card-label">งบประมาณโครงการ</div>
+          <div class="dash-card-value" id="dashBudget">-</div>
+          <div class="dash-card-sub">บาท &nbsp;·&nbsp; รวม VAT 7%</div>
+        </div>
+
+        <!-- Card 2: Median Price -->
+        <div class="dash-card">
+          <div class="dash-card-icon">
+            <svg width="18" height="18" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          </div>
+          <div class="dash-card-label">ราคากลาง</div>
+          <div class="dash-card-value" id="dashMidPrice">-</div>
+          <div class="dash-card-sub">บาท &nbsp;·&nbsp; รวม VAT 7%</div>
+        </div>
+
+        <!-- Card 3: Deadline -->
+        <div class="dash-card dash-card-deadline" id="dashDeadlineCard">
+          <div class="dash-card-icon" id="dashDeadlineIcon">
+            <svg width="18" height="18" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="dash-card-label">วันที่เหลือก่อนยื่นซอง</div>
+          <div class="dash-card-value" id="dashDaysLeft">-</div>
+          <div class="dash-card-sub" id="dashSubmitDate">-</div>
+          <div id="dashDeadlineBadge"></div>
+        </div>
+
+        <!-- Card 4: Progress -->
+        <div class="dash-card">
+          <div class="dash-card-icon">
+            <svg width="18" height="18" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="dash-card-label">ขั้นตอนที่เสร็จสิ้น</div>
+          <div class="dash-card-value" id="dashCompleted">0/14</div>
+          <div class="dash-card-sub">งานหลัก</div>
+        </div>
+
+      </div>
+
+      <!-- Progress + Alert row -->
+      <div class="dash-progress">
+        <div class="dash-progress-header">
+          <span>ความคืบหน้าขั้นตอนการทำงาน</span>
+          <span class="dash-progress-pct" id="dashProgressPct">0%</span>
+        </div>
+        <div class="dash-progress-bar">
+          <div class="dash-progress-fill" id="dashProgressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div id="deadlineAlertBox"></div>
+
+    </div><!-- /.dash-inner -->
+    </div>
+
+    <!-- PROJECT INFO -->
+    <div class="form-section">
+      <div class="section-title">ข้อมูลโครงการ</div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="form-group form-full">
+          <label class="form-label">ชื่อโครงการ <span class="required">*</span></label>
+          <input type="text" class="form-input" id="projectName" placeholder="เช่น งานจ้างควบคุมงานปรับปรุงทางวิ่ง 03-21 ทชร."
+            oninput="updateDashboard()">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">งบประมาณ <span class="required">*</span></label>
+            <div class="input-with-suffix">
+              <input type="text" class="form-input" id="budget" placeholder="0" oninput="formatNumber(this); updateDashboard()">
+              <span class="input-suffix">บาท (ราคารวม VAT 7%)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ราคากลาง <span class="required">*</span></label>
+            <div class="input-with-suffix">
+              <input type="text" class="form-input" id="midPrice" placeholder="0.00" oninput="formatNumber(this); updateDashboard()">
+              <span class="input-suffix">บาท (ราคารวม VAT 7%)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">จัดหาโดยวิธี <span class="required">*</span></label>
+            <select class="form-input" id="procureMethod">
+              <option value="">เลือกวิธีจัดหา</option>
+              <option>ประกาศเชิญชวนทั่วไป</option>
+              <option>ประกวดราคาอิเล็คทรอนิกส์ e-Bidding</option>
+              <option>คัดเลือก</option>
+              <option>เฉพาะเจาะจง</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">อำนาจอนุมัติ <span class="required">*</span></label>
+            <select class="form-input" id="approveAuth">
+              <option value="">เลือกผู้มีอำนาจ</option>
+              <option>เข้าบอร์ด (ผอญ. ลงนามแทน)</option>
+              <option>กอญ.</option><option>รญว.</option><option>รญท.ผสภ.</option>
+              <option>ผดม.</option><option>ผภก.</option><option>ผชม.</option>
+              <option>ชญว.</option><option>วญท.</option><option>รสภ.</option>
+              <option>รดม.</option><option>รภก.</option><option>รชม.</option>
+              <option>ผหญ.</option><option>ผชร.</option><option>ผอก.สนวก.</option>
+              <option>รหญ.</option><option>รชร.</option><option>ผอก.ฝพอ.</option>
+              <option>ผอก.ฝอค.</option><option>ผอก.ฝอภ.</option><option>ผอก.ฝอช.</option>
+              <option>ผอก.ฝอค.สนวก.</option><option>รอก.ฝพอ.</option>
+              <option>รอก.ฝอด.</option><option>รอก.ฝอภ.</option><option>รอก.ฝอช.</option>
+              <option>รอก.ฝอค.สนวก.</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">วันพิจารณาผล</label>
+            <div class="fp-form-wrap">
+              <svg class="fp-icon" width="16" height="16" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="text" class="form-input" id="considerDate" placeholder="เลือกวันที่" readonly
+                data-fp="single" data-store="considerDate">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">กำหนดรับเอกสาร</label>
+            <div class="date-range-wrap">
+              <div class="fp-form-wrap" style="flex:1">
+                <svg class="fp-icon" width="16" height="16" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="text" class="form-input" id="docReceiveStart" placeholder="เริ่มต้น" readonly
+                  data-fp="single" data-store="docReceiveStart">
+              </div>
+              <span class="date-range-sep">ถึง</span>
+              <div class="fp-form-wrap" style="flex:1">
+                <svg class="fp-icon" width="16" height="16" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="text" class="form-input" id="docReceiveEnd" placeholder="สิ้นสุด" readonly
+                  data-fp="single" data-store="docReceiveEnd">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">วันที่ยื่นซอง <span class="required">*</span></label>
+            <div class="fp-form-wrap">
+              <svg class="fp-icon" width="16" height="16" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="text" class="form-input" id="submitDate" placeholder="เลือกวันที่" readonly
+                data-fp="single" data-store="submitDate">
+            </div>
+            <div id="submitDateAlert" style="margin-top:4px"></div>
+          </div>
+          <div class="form-group" style="grid-column: span 2">
+            <label class="form-label">หมายเหตุ</label>
+            <textarea class="form-input" id="projectRemark" placeholder="หมายเหตุเพิ่มเติม..." rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK TABLE -->
+    <div class="form-section">
+      <div class="section-title">ขั้นตอนการทำงาน</div>
+      <div class="task-table-wrap">
+        <table class="task-table" id="taskTable">
+          <thead>
+            <tr>
+              <th style="width:64px">ลำดับ</th>
+              <th>ขั้นตอนการทำงาน</th>
+              <th style="width:96px">สถานะ</th>
+              <th style="width:136px">เมื่อวันที่</th>
+              <th style="width:130px">ตั้งแต่วันที่</th>
+              <th style="width:130px">ถึงวันที่</th>
+              <th style="width:160px">หมายเหตุ</th>
+              <th style="width:90px;text-align:center">เพิ่มย่อย</th>
+            </tr>
+          </thead>
+          <tbody id="taskBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="form-section">
+      <div class="section-title">หมายเหตุและการดำเนินการ</div>
+      <div class="form-group">
+        <label class="form-label">อุปสรรคในการทำงาน</label>
+        <textarea class="form-input" id="obstacles" placeholder="ระบุอุปสรรคหรือปัญหาที่พบระหว่างดำเนินการ..." rows="4"></textarea>
+      </div>
+    </div>
+
+    <!-- ACTION BAR -->
+    <div class="action-bar">
+      <button class="btn-primary" onclick="saveProject()">บันทึก</button>
+      <button class="btn-success" onclick="exportExcel()">Export Excel</button>
+      <button class="btn-secondary" onclick="exportJSON()">Export JSON</button>
+      <button class="btn-secondary" style="margin-left:auto;color:#dc3545;border-color:#dc3545"
+        onclick="currentProjectId && deleteProject(currentProjectId).then(()=>showPage('list'))">
+        ลบโครงการนี้
+      </button>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+// ============================================================
+// CONFIG — ใส่ Web App URL จาก Apps Script ตรงนี้
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxank0TgWSQR-9mNbDqQ-Ar2U6VEDul1ZfIlfAuXcM0b8lGM4dqXStOm8_5zVMryqe3/exec';
+
+// ============================================================
+// DATA (in-memory cache, synced from Google Sheets)
+// ============================================================
+let projects = [];
+let currentProjectId = null;
+let _isLoading = false;
+
+// ── API helpers (GET only — หลีกเลี่ยง CORS) ──────────────────
+async function apiCall(action, payload = {}) {
+  try {
+    let url = `${SCRIPT_URL}?action=${action}`;
+    if (Object.keys(payload).length > 0) {
+      // ส่ง data เป็น JSON encoded ใน query string
+      url += `&data=${encodeURIComponent(JSON.stringify(payload))}`;
+    }
+    const res = await fetch(url, { method: 'GET' });
+    const json = await res.json();
+    return json;
+  } catch(e) {
+    return { ok: false, error: e.toString() };
+  }
+}
+
+function showLoading(msg = 'กำลังโหลด...') {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('loadingMsg').textContent = msg;
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+async function loadAllProjects() {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    showToast('⚠️ ยังไม่ได้ตั้งค่า SCRIPT_URL', 'error');
+    return;
+  }
+  showLoading('กำลังโหลดโครงการทั้งหมด...');
+  const res = await apiCall('getAll');
+  hideLoading();
+  if (res.ok) {
+    projects = res.projects || [];
+  } else {
+    showToast('โหลดข้อมูลไม่สำเร็จ: ' + (res.error || ''), 'error');
+  }
+}
+
+const TASK_DEFINITIONS = [
+  { num: '1', name: 'ได้รับมอบหมายงาน', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '2', name: 'แผนใหม่ (ประกาศเมื่อวันที่)', hasStatus: true, hasSingle: true, hasRange: false,
+    subs: [
+      { num: '', name: 'เปลี่ยนแปลงแผน (ประกาศเมื่อวันที่)', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '2.1', name: 'ลง Web e-GP', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '2.2', name: 'ลง Web AOT', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '2.3', name: 'ติดบอร์ด', hasStatus: true, hasSingle: true, hasRange: false },
+    ]
+  },
+  { num: '3', name: 'เริ่มสร้างโครงการ', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '4', name: 'สร้างโครงการเสร็จ', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '5', name: 'ส่งออกขออนุมัติ', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '6', name: 'อนุมัติ โดย', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '7', name: 'ร่างพิจารณ์ (ถ้ามี)', hasStatus: true, hasSingle: true, hasRange: true,
+    subs: [
+      { num: '7.1', name: 'ลง Web e-GP', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '7.2', name: 'ลง Web AOT', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '7.3', name: 'ติดบอร์ด', hasStatus: true, hasSingle: true, hasRange: false },
+    ]
+  },
+  { num: '8', name: 'รายงานผล (ร่างพิจารณ์)', hasStatus: true, hasSingle: true, hasRange: false, subs: [] },
+  { num: '9', name: 'ประกาศจริง (ประกาศเมื่อวันที่)', hasStatus: false, hasSingle: true, hasRange: false,
+    subs: [
+      { num: '9.1', name: 'ลง Web e-GP', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '9.2', name: 'ลง Web AOT', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '9.3', name: 'ติดบอร์ด', hasStatus: true, hasSingle: true, hasRange: false },
+    ]
+  },
+  { num: '10', name: 'แจ้งกรรมการฯ', hasStatus: false, hasSingle: true, hasRange: true,
+    subs: [
+      { num: '10.1', name: 'กำหนดการสอบถาม (ถ้ามี)', hasStatus: true, hasSingle: true, hasRange: true },
+      { num: '10.2', name: 'กำหนดสิ้นสุดการสอบถาม', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '10.3', name: 'กำหนดการยื่นซองเสนอราคา', hasStatus: false, hasSingle: true, hasRange: false },
+      { num: '10.4', name: 'กำหนดการพิจารณาผล', hasStatus: false, hasSingle: true, hasRange: true },
+    ]
+  },
+  { num: '11', name: 'สรุปรายงานกรรมการและขออนุมัติสั่งซื้อสั่งจ้าง', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+  { num: '12', name: 'ประกาศผู้ชนะการเสนอราคา', hasStatus: false, hasSingle: true, hasRange: false,
+    subs: [
+      { num: '12.1', name: 'ลง Web e-GP', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '12.2', name: 'ลง Web AOT', hasStatus: true, hasSingle: true, hasRange: false },
+      { num: '12.3', name: 'ติดบอร์ด', hasStatus: true, hasSingle: true, hasRange: false },
+    ]
+  },
+  { num: '13', name: 'อุทธรณ์ (7 วัน) ถ้ามี', hasStatus: true, hasSingle: true, hasRange: true, subs: [] },
+  { num: '14', name: 'ส่งงานสัญญา', hasStatus: false, hasSingle: true, hasRange: false, subs: [] },
+];
+
+// Dynamic sub-tasks added by user
+let userSubTasks = {}; // { taskNum: [{id, name}] }
+// Task row data
+let taskData = {}; // keyed by rowId
+
+// ============================================================
+// AUTO-GROW TEXTAREA
+// ============================================================
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function autoGrowAll() {
+  document.querySelectorAll('.task-remark-ta').forEach(el => autoGrow(el));
+}
+
+// ============================================================
+// THAI DATE FORMAT
+// ============================================================
+const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+function toThaiDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const day = d.getDate();
+  const month = THAI_MONTHS_SHORT[d.getMonth()];
+  const year = (d.getFullYear() + 543).toString().slice(-2);
+  return `${day} ${month} ${year}`;
+}
+
+function updateDateDisplay(input, displayId) {
+  const el = document.getElementById(displayId);
+  if (el) el.textContent = toThaiDate(input.value);
+}
+
+// ============================================================
+// NUMBER FORMAT
+// ============================================================
+function formatNumber(input) {
+  let v = input.value.replace(/[^0-9.]/g, '');
+  const parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  input.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+}
+
+function parseNumber(str) {
+  return parseFloat((str || '0').replace(/,/g, '')) || 0;
+}
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+async function showPage(page, projectId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  if (page === 'list') {
+    document.getElementById('headerNav').innerHTML = `<button class="btn-header active">โครงการทั้งหมด</button>`;
+    await loadAllProjects();
+    renderProjects();
+  } else if (page === 'form') {
+    document.getElementById('headerNav').innerHTML = `
+      <button class="btn-back" onclick="showPage('list')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        กลับ
+      </button>
+      <span style="color:rgba(255,255,255,0.5);font-size:12px">|</span>
+      <span style="color:white;font-size:13px;opacity:0.9">${projectId ? 'แก้ไขโครงการ' : 'สร้างโครงการใหม่'}</span>`;
+
+    if (projectId) {
+      currentProjectId = projectId;
+      loadProject(projectId);
+    } else {
+      currentProjectId = null;
+      resetForm();
+      buildTaskTable();
+      setTimeout(initAllTaskFp, 50);
+    }
+    updateDashboard();
+  }
+}
+
+// ============================================================
+// TASK TABLE BUILD
+// ============================================================
+function getRowId(num, isUser, idx) {
+  // Replace dots with underscores to make valid CSS/DOM selectors
+  const safe = String(num).replace(/\./g, '_');
+  return isUser ? `user_${safe}_${idx}` : `task_${safe}`;
+}
+
+function buildTaskTable() {
+  const tbody = document.getElementById('taskBody');
+  tbody.innerHTML = '';
+  userSubTasks = {};
+
+  TASK_DEFINITIONS.forEach(task => {
+    userSubTasks[task.num] = userSubTasks[task.num] || [];
+    appendTaskRow(tbody, task, false);
+    task.subs.forEach(sub => appendTaskRow(tbody, sub, true));
+    // Insert user-added subs placeholder marker (for DOM insertion point)
+    appendSubMarker(tbody, task.num);
+  });
+
+  // "+ เพิ่มขั้นตอนหลัก" row at the very bottom
+  appendAddMainRow(tbody);
+}
+
+function appendTaskRow(tbody, task, isSub) {
+  const rowId = getRowId(task.num, false, 0);
+  const tr = document.createElement('tr');
+  tr.className = isSub ? 'task-sub' : 'task-main';
+  tr.id = 'row_' + rowId;
+  tr.innerHTML = buildRowHTML(task, isSub, false, rowId);
+  tbody.appendChild(tr);
+}
+
+function appendSubMarker(tbody, taskNum) {
+  // Invisible anchor row — marks where user subs for this taskNum get inserted
+  const tr = document.createElement('tr');
+  tr.className = 'add-sub-row';
+  tr.id = 'addsub_' + taskNum;
+  tr.style.display = 'none'; // hidden; just an insertion anchor
+  tbody.appendChild(tr);
+}
+
+function appendAddMainRow(tbody) {
+  const tr = document.createElement('tr');
+  tr.id = 'add-main-row';
+  tr.innerHTML = `<td colspan="9" style="padding:8px 12px 4px; background:transparent; border:none">
+    <button class="btn-add-main-row" onclick="addMainTask()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      เพิ่มขั้นตอนหลัก
+    </button>
+  </td>`;
+  tbody.appendChild(tr);
+}
+
+const CAL_ICON = `<svg class="fp-icon" width="14" height="14" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const PLUS_ICON = `<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+
+function buildRowHTML(task, isSub, isUser, rowId) {
+  const nameClass = isSub ? 'task-name-sub' : 'task-name';
+  const indent = isSub ? 'padding-left:28px' : '';
+
+  // Editable number cell
+  const numClass = isSub ? 'task-num-input' : 'task-num-input main-task';
+  const numCell = `<td style="width:60px;text-align:center">
+    <input type="text" class="${numClass}" value="${task.num}"
+      data-row="${rowId}" data-field="num" oninput="saveRowData('${rowId}')"
+      title="แก้ไขลำดับได้">
+  </td>`;
+
+  const statusCell = task.hasStatus
+    ? `<td><select class="task-table-input" onchange="saveRowData('${rowId}')">
+        <option value="-">-</option>
+        <option value="มี">มี</option>
+        <option value="ไม่มี">ไม่มี</option>
+        <option value="Y">Y</option>
+        <option value="N">N</option>
+      </select></td>`
+    : `<td></td>`;
+
+  const singleCell = task.hasSingle
+    ? `<td><div class="fp-wrap">${CAL_ICON}
+        <input type="text" class="task-table-input fp-task" placeholder="เลือกวันที่" readonly
+          data-row="${rowId}" data-field="single" data-store-key="${rowId}_single">
+      </div></td>`
+    : `<td></td>`;
+
+  let startCell = `<td></td>`;
+  let endCell = `<td></td>`;
+  if (task.hasRange) {
+    startCell = `<td><div class="fp-wrap">${CAL_ICON}
+      <input type="text" class="task-table-input fp-task" placeholder="เริ่มต้น" readonly
+        data-row="${rowId}" data-field="start" data-store-key="${rowId}_start">
+    </div></td>`;
+    endCell = `<td><div class="fp-wrap">${CAL_ICON}
+      <input type="text" class="task-table-input fp-task" placeholder="สิ้นสุด" readonly
+        data-row="${rowId}" data-field="end" data-store-key="${rowId}_end">
+    </div></td>`;
+  }
+
+  const remarkCell = (task.hasSingle || task.hasRange || task.hasStatus)
+    ? `<td><textarea class="task-table-input task-remark-ta" placeholder="หมายเหตุ" rows="1"
+        data-row="${rowId}" data-field="remark"
+        oninput="autoGrow(this); saveRowData('${rowId}')"></textarea></td>`
+    : `<td></td>`;
+
+  // Action column: main tasks → "+ เพิ่มย่อย" button; sub tasks → empty
+  const actionCell = !isSub
+    ? `<td style="text-align:center;white-space:nowrap">
+        <button class="btn-add-sub-inline" onclick="addUserSub('${task.num}')" title="เพิ่มรายการย่อยของข้อนี้" data-parent-num="${task.num}">
+          ${PLUS_ICON} เพิ่มย่อย
+        </button>
+      </td>`
+    : `<td></td>`;
+
+  return `
+    ${numCell}
+    <td style="${indent}"><span class="${nameClass}">${task.name}</span></td>
+    ${statusCell}
+    ${singleCell}
+    ${startCell}
+    ${endCell}
+    ${remarkCell}
+    ${actionCell}`;
+}
+
+function buildUserSubHTML(task, rowId, parentNum) {
+  return `
+    <td style="width:60px;text-align:center">
+      <input type="text" class="task-num-input user-task" value="${task.num}"
+        data-row="${rowId}" data-field="num" oninput="saveRowData('${rowId}')"
+        title="แก้ไขลำดับได้">
+    </td>
+    <td style="padding-left:28px">
+      <input type="text" class="task-table-input" placeholder="ชื่อรายการย่อย..."
+        data-row="${rowId}" data-field="name" oninput="saveRowData('${rowId}')"
+        data-parent="${parentNum}" style="color:#1a2332;min-width:180px">
+    </td>
+    <td><select class="task-table-input" onchange="saveRowData('${rowId}')">
+      <option value="-">-</option>
+      <option value="มี">มี</option>
+      <option value="ไม่มี">ไม่มี</option>
+      <option value="Y">Y</option>
+      <option value="N">N</option>
+    </select></td>
+    <td><div class="fp-wrap">${CAL_ICON}
+      <input type="text" class="task-table-input fp-task" placeholder="เลือกวันที่" readonly
+        data-row="${rowId}" data-field="single" data-store-key="${rowId}_single">
+    </div></td>
+    <td></td>
+    <td></td>
+    <td><textarea class="task-table-input task-remark-ta" placeholder="หมายเหตุ" rows="1"
+      data-row="${rowId}" data-field="remark"
+      oninput="autoGrow(this); saveRowData('${rowId}')"></textarea></td>
+    <td style="text-align:center">
+      <button class="btn-danger-sm" onclick="removeUserSub('${rowId}')">ลบ</button>
+    </td>`;
+}
+
+function validateDateRange(rowId) {
+  const rowEl = document.getElementById('row_' + rowId);
+  if (!rowEl) return;
+  const startInput = rowEl.querySelector('[data-field="start"]');
+  const endInput = rowEl.querySelector('[data-field="end"]');
+  if (!startInput || !endInput) return;
+  const s = startInput.dataset.iso || '';
+  const e = endInput.dataset.iso || '';
+  if (s && e && e < s) {
+    endInput.classList.add('error');
+    showToast('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'error');
+  } else {
+    endInput.classList.remove('error');
+  }
+}
+
+function validateDocDateRange() {
+  const s = document.getElementById('docReceiveStart');
+  const e = document.getElementById('docReceiveEnd');
+  const sIso = s.dataset.iso || '';
+  const eIso = e.dataset.iso || '';
+  if (sIso && eIso && eIso < sIso) {
+    e.classList.add('error');
+    showToast('วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มต้น', 'error');
+  } else {
+    e.classList.remove('error');
+  }
+}
+
+function addUserSub(taskNum) {
+  userSubTasks[taskNum] = userSubTasks[taskNum] || [];
+  const idx = userSubTasks[taskNum].length + 1; // 1-based counter for this parent
+  const safeParent = String(taskNum).replace(/\./g, '_');
+  const id = `user_${safeParent}_${idx}`;
+  // Label: parentNum.nextIndex (e.g. 2.4, 10.5, 15.1)
+  // Find the highest existing sub-number for this parent to avoid collision
+  const existingSubs = [...document.querySelectorAll(`[data-parent="${taskNum}"]`)];
+  let maxSubIdx = 0;
+  existingSubs.forEach(el => {
+    const numInp = el.closest('tr')?.querySelector('[data-field="num"]');
+    if (numInp) {
+      const parts = numInp.value.split('.');
+      if (parts.length > 1) {
+        const n = parseInt(parts[parts.length - 1]);
+        if (!isNaN(n) && n > maxSubIdx) maxSubIdx = n;
+      }
+    }
+  });
+  // Also count system subs (2.1, 2.2 etc) already in table for this parent
+  document.querySelectorAll('tr.task-sub .task-num-input').forEach(el => {
+    const v = el.value;
+    const parts = v.split('.');
+    if (parts.length === 2 && parts[0] === String(taskNum)) {
+      const n = parseInt(parts[1]);
+      if (!isNaN(n) && n > maxSubIdx) maxSubIdx = n;
+    }
+  });
+  const subIdx = maxSubIdx + 1;
+  const label = `${taskNum}.${subIdx}`;
+  userSubTasks[taskNum].push({ id, label });
+
+  const task = { num: label };
+  const tr = document.createElement('tr');
+  tr.className = 'task-subtask-user';
+  tr.id = 'row_' + id;
+  tr.dataset.parentId = taskNum;
+  tr.innerHTML = buildUserSubHTML(task, id, taskNum);
+
+  // Insert before the invisible anchor marker for this taskNum
+  const marker = document.getElementById('addsub_' + taskNum);
+  if (marker) marker.parentNode.insertBefore(tr, marker);
+  setTimeout(() => { tr.querySelectorAll('.fp-task').forEach(el => initTaskFp(el)); }, 20);
+  updateDashboard();
+}
+
+function removeUserSub(rowId) {
+  const row = document.getElementById('row_' + rowId);
+  if (row) {
+    // Also remove from userSubTasks tracking
+    const parentId = row.dataset.parentId;
+    if (parentId && userSubTasks[parentId]) {
+      userSubTasks[parentId] = userSubTasks[parentId].filter(s => s.id !== rowId);
+    }
+    row.remove();
+  }
+  updateDashboard();
+}
+
+function addMainTask() {
+  // Find the highest integer task number currently in the table
+  const tbody = document.getElementById('taskBody');
+  const allNums = [];
+  tbody.querySelectorAll('.task-num-input.main-task').forEach(el => {
+    const n = parseInt(el.value);
+    if (!isNaN(n)) allNums.push(n);
+  });
+  const nextNum = allNums.length > 0 ? Math.max(...allNums) + 1 : 15;
+
+  const safeNum = String(nextNum).replace(/\./g, '_');
+  const rowId = `task_main_${safeNum}_${Date.now()}`;
+
+  const tr = document.createElement('tr');
+  tr.className = 'task-main';
+  tr.id = 'row_' + rowId;
+
+  const calIcon = CAL_ICON;
+  const plusIcon = PLUS_ICON;
+  tr.innerHTML = `
+    <td style="width:60px;text-align:center">
+      <input type="text" class="task-num-input main-task" value="${nextNum}"
+        data-row="${rowId}" data-field="num" oninput="saveRowData('${rowId}')"
+        title="แก้ไขลำดับได้">
+    </td>
+    <td>
+      <input type="text" class="task-table-input" placeholder="ชื่อขั้นตอนหลัก..."
+        data-row="${rowId}" data-field="name" oninput="saveRowData('${rowId}')"
+        style="color:#1a2332;font-weight:600;min-width:200px">
+    </td>
+    <td></td>
+    <td><div class="fp-wrap">${calIcon}
+      <input type="text" class="task-table-input fp-task" placeholder="เลือกวันที่" readonly
+        data-row="${rowId}" data-field="single" data-store-key="${rowId}_single">
+    </div></td>
+    <td></td>
+    <td></td>
+    <td><textarea class="task-table-input task-remark-ta" placeholder="หมายเหตุ" rows="1"
+      data-row="${rowId}" data-field="remark"
+      oninput="autoGrow(this); saveRowData('${rowId}')"></textarea></td>
+    <td style="text-align:center;white-space:nowrap">
+      <button class="btn-add-sub-inline" onclick="addUserSub('${nextNum}')" title="เพิ่มรายการย่อยของข้อนี้">
+        ${plusIcon} เพิ่มย่อย
+      </button>
+    </td>`;
+
+  // Insert before the "+ เพิ่มขั้นตอนหลัก" bottom row
+  const addMainRow = document.getElementById('add-main-row');
+  tbody.insertBefore(tr, addMainRow);
+
+  // Create invisible sub-marker for this new main task
+  const marker = document.createElement('tr');
+  marker.className = 'add-sub-row';
+  marker.id = 'addsub_' + nextNum;
+  marker.style.display = 'none';
+  tbody.insertBefore(marker, addMainRow);
+
+  userSubTasks[nextNum] = userSubTasks[nextNum] || [];
+
+  setTimeout(() => { tr.querySelectorAll('.fp-task').forEach(el => initTaskFp(el)); }, 20);
+  updateDashboard();
+}
+
+function saveRowData(rowId) {
+  // Use attribute selectors (safe for IDs containing dots/underscores)
+  const rowEl = document.getElementById('row_' + rowId);
+  if (!rowEl) return;
+  const status = rowEl.querySelector('select');
+  const nameInp = rowEl.querySelector('[data-field="name"]');
+  const single = rowEl.querySelector('[data-field="single"]');
+  const start = rowEl.querySelector('[data-field="start"]');
+  const end = rowEl.querySelector('[data-field="end"]');
+  const remark = rowEl.querySelector('[data-field="remark"]');
+  const numInp = rowEl.querySelector('[data-field="num"]');
+  taskData[rowId] = {
+    num: numInp ? numInp.value : '',
+    name: nameInp ? nameInp.value : '',
+    status: status ? status.value : '',
+    single: single ? (single.dataset.iso || '') : '',
+    start: start ? (start.dataset.iso || '') : '',
+    end: end ? (end.dataset.iso || '') : '',
+    remark: remark ? remark.value : ''
+  };
+  updateDashboard();
+}
+
+// ============================================================
+// DASHBOARD UPDATE
+// ============================================================
+function updateDashboard() {
+  const budget = parseNumber(document.getElementById('budget')?.value);
+  const midPrice = parseNumber(document.getElementById('midPrice')?.value);
+  const submitDateVal = document.getElementById('submitDate')?.dataset?.iso || '';
+
+  // Show dashboard section once data entered
+  const dashSection = document.getElementById('dashboardSection');
+  if (budget || midPrice || submitDateVal) dashSection.style.display = 'block';
+
+  // Budget & price
+  document.getElementById('dashBudget').textContent = budget ? budget.toLocaleString('th-TH') : '-';
+  document.getElementById('dashMidPrice').textContent = midPrice ? midPrice.toLocaleString('th-TH') : '-';
+
+  // Days remaining
+  if (submitDateVal) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const submit = new Date(submitDateVal);
+    const diff = Math.ceil((submit - today) / 86400000);
+    document.getElementById('dashDaysLeft').textContent = diff >= 0 ? diff : Math.abs(diff);
+    document.getElementById('dashSubmitDate').textContent = diff >= 0
+      ? `วัน (${toThaiDate(submitDateVal)})`
+      : `วัน (เลยกำหนด ${toThaiDate(submitDateVal)})`;
+
+    // Deadline card color class
+    const deadlineCard = document.getElementById('dashDeadlineCard');
+    const badgeEl = document.getElementById('dashDeadlineBadge');
+    const iconEl = document.getElementById('dashDeadlineIcon');
+    deadlineCard.className = 'dash-card dash-card-deadline';
+    if (diff < 0) {
+      deadlineCard.classList.add('dash-card-overdue');
+      iconEl.style.background = 'rgba(220,53,69,0.12)';
+      iconEl.innerHTML = `<svg width="18" height="18" fill="none" stroke="#dc3545" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+      badgeEl.innerHTML = `<span class="dash-card-badge dash-badge-danger">เลยกำหนดแล้ว</span>`;
+    } else if (diff <= 3) {
+      deadlineCard.classList.add('dash-card-upcoming');
+      iconEl.style.background = 'rgba(230,126,34,0.12)';
+      iconEl.innerHTML = `<svg width="18" height="18" fill="none" stroke="#e67e22" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      badgeEl.innerHTML = `<span class="dash-card-badge dash-badge-warning">ใกล้กำหนด</span>`;
+    } else {
+      iconEl.style.background = '';
+      iconEl.innerHTML = `<svg width="18" height="18" fill="none" stroke="#4481eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      badgeEl.innerHTML = `<span class="dash-card-badge dash-badge-safe">ปกติ</span>`;
+    }
+
+    // Alert banner
+    const alertBox = document.getElementById('deadlineAlertBox');
+    let alertClass = '', alertMsg = '';
+    if (diff < 0) {
+      alertClass = 'danger'; alertMsg = `เลยกำหนดยื่นซอง ${Math.abs(diff)} วันแล้ว`;
+    } else if (diff <= 3) {
+      alertClass = 'warning'; alertMsg = `ใกล้ถึงกำหนดยื่นซอง อีก ${diff} วัน`;
+    } else {
+      alertClass = 'safe'; alertMsg = `กำหนดยื่นซอง: ${toThaiDate(submitDateVal)} (เหลือ ${diff} วัน)`;
+    }
+    alertBox.innerHTML = `<div class="deadline-alert ${alertClass}">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      ${alertMsg}
+    </div>`;
+
+    // Submit date field highlight
+    const submitField = document.getElementById('submitDate');
+    const alertEl = document.getElementById('submitDateAlert');
+    if (diff < 0) {
+      submitField.style.borderColor = '#dc3545';
+      if(alertEl) alertEl.innerHTML = `<span class="deadline-badge overdue">Overdue</span>`;
+    } else if (diff <= 3) {
+      submitField.style.borderColor = '#e67e22';
+      if(alertEl) alertEl.innerHTML = `<span class="deadline-badge upcoming">Upcoming Deadline</span>`;
+    } else {
+      submitField.style.borderColor = '';
+      if(alertEl) alertEl.innerHTML = '';
+    }
+  }
+
+  // Progress
+  const allMainTasks = document.querySelectorAll('tr.task-main');
+  let completed = 0;
+  allMainTasks.forEach(row => {
+    const singleInput = row.querySelector('[data-field="single"]');
+    if (singleInput && (singleInput.dataset.iso || singleInput.value)) completed++;
+  });
+  const total = TASK_DEFINITIONS.length;
+  const pct = Math.round((completed / total) * 100);
+  document.getElementById('dashCompleted').textContent = `${completed}/${total}`;
+  document.getElementById('dashProgressPct').textContent = pct + '%';
+  document.getElementById('dashProgressBar').style.width = pct + '%';
+}
+
+// ============================================================
+// PROJECT CRUD
+// ============================================================
+function collectFormData() {
+  const data = {
+    id: currentProjectId || Date.now().toString(),
+    name: document.getElementById('projectName').value,
+    budget: document.getElementById('budget').value,
+    midPrice: document.getElementById('midPrice').value,
+    procureMethod: document.getElementById('procureMethod').value,
+    approveAuth: document.getElementById('approveAuth').value,
+    considerDate: document.getElementById('considerDate').dataset.iso || '',
+    docReceiveStart: document.getElementById('docReceiveStart').dataset.iso || '',
+    docReceiveEnd: document.getElementById('docReceiveEnd').dataset.iso || '',
+    submitDate: document.getElementById('submitDate').dataset.iso || '',
+    projectRemark: document.getElementById('projectRemark').value,
+    obstacles: document.getElementById('obstacles').value,
+    tasks: {},
+    userSubTasks: JSON.parse(JSON.stringify(userSubTasks)),
+    createdAt: currentProjectId ? undefined : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  // Collect all task inputs
+  const allRows = document.querySelectorAll('#taskBody tr[id^="row_"]');
+  allRows.forEach(row => {
+    const rowId = row.id.replace('row_', '');
+    const numInp = row.querySelector('[data-field="num"]');
+    const status = row.querySelector('select');
+    const nameInp = row.querySelector('[data-field="name"]');
+    const single = row.querySelector('[data-field="single"]');
+    const start = row.querySelector('[data-field="start"]');
+    const end = row.querySelector('[data-field="end"]');
+    const remark = row.querySelector('[data-field="remark"]');
+    data.tasks[rowId] = {
+      num: numInp ? numInp.value : '',
+      name: nameInp ? nameInp.value : '',
+      status: status ? status.value : '',
+      single: single ? (single.dataset.iso || '') : '',
+      start: start ? (start.dataset.iso || '') : '',
+      end: end ? (end.dataset.iso || '') : '',
+      remark: remark ? remark.value : ''
+    };
+  });
+
+  return data;
+}
+
+async function saveProject() {
+  const name = document.getElementById('projectName').value.trim();
+  if (!name) { showToast('กรุณากรอกชื่อโครงการ', 'error'); document.getElementById('projectName').focus(); return; }
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    showToast('⚠️ ยังไม่ได้ตั้งค่า SCRIPT_URL', 'error'); return;
+  }
+
+  const data = collectFormData();
+  if (!data.createdAt) data.createdAt = new Date().toISOString();
+  data.updatedAt = new Date().toISOString();
+
+  showLoading('กำลังบันทึก...');
+  const res = await apiCall('save', data);
+  hideLoading();
+
+  if (res.ok) {
+    // Update local cache
+    const idx = projects.findIndex(p => p.id === data.id);
+    if (idx >= 0) projects[idx] = data;
+    else projects.push(data);
+    currentProjectId = data.id;
+    showToast('บันทึกโครงการเรียบร้อยแล้ว ✓', 'success');
+  } else {
+    showToast('บันทึกไม่สำเร็จ: ' + (res.error || ''), 'error');
+  }
+}
+
+function loadProject(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+
+  document.getElementById('projectName').value = p.name || '';
+  document.getElementById('budget').value = p.budget || '';
+  document.getElementById('midPrice').value = p.midPrice || '';
+  document.getElementById('procureMethod').value = p.procureMethod || '';
+  document.getElementById('approveAuth').value = p.approveAuth || '';
+  document.getElementById('considerDate').value = p.considerDate || '';
+  document.getElementById('docReceiveStart').value = p.docReceiveStart || '';
+  document.getElementById('docReceiveEnd').value = p.docReceiveEnd || '';
+  document.getElementById('submitDate').value = p.submitDate || '';
+  document.getElementById('projectRemark').value = p.projectRemark || '';
+  document.getElementById('obstacles').value = p.obstacles || '';
+
+  // Set form dates via Flatpickr instances
+  ['considerDate','docReceiveStart','docReceiveEnd','submitDate'].forEach(fieldId => {
+    const isoVal = p[fieldId] || '';
+    if (isoVal && fpInstances[fieldId]) {
+      fpInstances[fieldId].setDate(isoVal, false);
+      const el = document.getElementById(fieldId);
+      el.dataset.iso = isoVal;
+      el.value = toThaiDate(isoVal);
+    }
+  });
+
+  userSubTasks = p.userSubTasks || {};
+  buildTaskTable();
+  // (fp will be initialized after task restore below)
+
+  // Restore user subtasks
+  Object.keys(userSubTasks).forEach(taskNum => {
+    const subs = userSubTasks[taskNum];
+    subs.forEach((sub) => {
+      const task = { num: sub.label };
+      const tr = document.createElement('tr');
+      tr.className = 'task-subtask-user';
+      tr.id = 'row_' + sub.id;
+      tr.dataset.parentId = taskNum;
+      tr.innerHTML = buildUserSubHTML(task, sub.id, taskNum);
+      const marker = document.getElementById('addsub_' + taskNum);
+      if (marker) marker.parentNode.insertBefore(tr, marker);
+    });
+  });
+
+  // Restore task data
+  if (p.tasks) {
+    Object.keys(p.tasks).forEach(rowId => {
+      const d = p.tasks[rowId];
+      const rowEl = document.getElementById('row_' + rowId);
+      if (!rowEl) return;
+      const nameInp = rowEl.querySelector('[data-field="name"]');
+      const status = rowEl.querySelector('select');
+      const single = rowEl.querySelector('[data-field="single"]');
+      const start = rowEl.querySelector('[data-field="start"]');
+      const end = rowEl.querySelector('[data-field="end"]');
+      const remark = rowEl.querySelector('[data-field="remark"]');
+      if (numInp && d.num) numInp.value = d.num;
+      if (nameInp && d.name) nameInp.value = d.name;
+      if (status && d.status) status.value = d.status;
+      if (single && d.single) { single.dataset.iso = d.single; single.value = toThaiDate(d.single); initTaskFp(single); }
+      if (start && d.start) { start.dataset.iso = d.start; start.value = toThaiDate(d.start); initTaskFp(start); }
+      if (end && d.end) { end.dataset.iso = d.end; end.value = toThaiDate(d.end); initTaskFp(end); }
+      if (remark && d.remark) { remark.value = d.remark; autoGrow(remark); }
+    });
+  }
+  setTimeout(initAllTaskFp, 50);
+  updateDashboard();
+}
+
+function resetForm() {
+  ['projectName','budget','midPrice','projectRemark','obstacles'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['procureMethod','approveAuth'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  ['considerDate','docReceiveStart','docReceiveEnd','submitDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.dataset.iso = ''; }
+    if (fpInstances[id]) fpInstances[id].clear();
+  });
+  taskData = {};
+  userSubTasks = {};
+  document.getElementById('dashboardSection').style.display = 'none';
+}
+
+// ============================================================
+// PROJECT LIST
+// ============================================================
+function renderProjects(filter) {
+  let list = [...projects];
+  if (filter) {
+    const q = filter.toLowerCase();
+    list = list.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.procureMethod || '').toLowerCase().includes(q) ||
+      (p.approveAuth || '').toLowerCase().includes(q)
+    );
+  }
+  document.getElementById('projectCount').textContent = `${list.length} โครงการ`;
+  const container = document.getElementById('projectsContainer');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="1.5">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+      <div class="empty-title">${filter ? 'ไม่พบโครงการที่ค้นหา' : 'ยังไม่มีโครงการในระบบ'}</div>
+      ${!filter ? `<button class="btn-outline" onclick="showPage('form')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        สร้างโครงการแรก</button>` : ''}
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="projects-grid">${list.map(p => projectCardHTML(p)).join('')}</div>`;
+}
+
+function projectCardHTML(p) {
+  const budget = parseNumber(p.budget);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const submit = p.submitDate ? new Date(p.submitDate) : null;
+  const diff = submit ? Math.ceil((submit - today) / 86400000) : null;
+
+  let badgeClass = 'badge-blue', badgeText = p.procureMethod || 'ไม่ระบุวิธี';
+  if (p.procureMethod === 'เฉพาะเจาะจง') { badgeClass = 'badge-green'; }
+  else if (p.procureMethod === 'คัดเลือก') { badgeClass = 'badge-orange'; }
+
+  let deadlineBadge = '';
+  if (diff !== null) {
+    if (diff < 0) deadlineBadge = `<span class="deadline-badge overdue">Overdue</span>`;
+    else if (diff <= 3) deadlineBadge = `<span class="deadline-badge upcoming">Upcoming</span>`;
+  }
+
+  const taskCount = Object.values(p.tasks || {}).filter(t => t.single || t.start).length;
+  const progress = Math.min(100, Math.round((taskCount / 14) * 100));
+
+  return `<div class="project-card" onclick="showPage('form','${p.id}')">
+    <div class="project-card-header">
+      <div class="project-card-title">${p.name || 'ไม่มีชื่อโครงการ'}</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${deadlineBadge}
+        <span class="badge ${badgeClass}">${shortenMethod(badgeText)}</span>
+      </div>
+    </div>
+    <div class="project-card-meta">
+      <span>
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        ${budget ? budget.toLocaleString('th-TH') + ' บาท' : 'ไม่ระบุงบ'}
+      </span>
+      ${p.approveAuth ? `<span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.approveAuth}</span>` : ''}
+      ${submit ? `<span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${toThaiDate(p.submitDate)}</span>` : ''}
+    </div>
+    <div class="project-card-progress">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+    </div>
+  </div>`;
+}
+
+function shortenMethod(m) {
+  if (m === 'ประกวดราคาอิเล็คทรอนิกส์ e-Bidding') return 'e-Bidding';
+  if (m === 'ประกาศเชิญชวนทั่วไป') return 'เชิญชวนทั่วไป';
+  return m;
+}
+
+function filterProjects(val) {
+  renderProjects(val.trim() || null);
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportJSON() {
+  const data = collectFormData();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `TrackingLog_${sanitizeFilename(data.name || 'project')}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Export JSON เรียบร้อย', 'success');
+}
+
+function sanitizeFilename(name) {
+  return name.replace(/[^a-zA-Z0-9ก-๙_\-]/g, '_').slice(0, 40);
+}
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') { showToast('กำลังโหลด XLSX library...', ''); return; }
+  const data = collectFormData();
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Project Info
+  const infoData = [
+    ['TrackingLog - ระบบติดตามงานจัดซื้อจัดจ้าง สบด.ฝอค.', '', ''],
+    [''],
+    ['ชื่อโครงการ', data.name, ''],
+    ['งบประมาณ', data.budget + ' บาท (รวม VAT 7%)', ''],
+    ['ราคากลาง', data.midPrice + ' บาท (รวม VAT 7%)', ''],
+    ['จัดหาโดยวิธี', data.procureMethod, ''],
+    ['อำนาจอนุมัติ', data.approveAuth, ''],
+    ['วันพิจารณาผล', toThaiDate(data.considerDate), ''],
+    ['กำหนดรับเอกสาร', toThaiDate(data.docReceiveStart) + ' - ' + toThaiDate(data.docReceiveEnd), ''],
+    ['วันที่ยื่นซอง', toThaiDate(data.submitDate), ''],
+    ['หมายเหตุ', data.projectRemark, ''],
+    ['อุปสรรคในการทำงาน', data.obstacles, ''],
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(infoData);
+  ws1['!cols'] = [{wch: 25}, {wch: 60}, {wch: 20}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'ข้อมูลโครงการ');
+
+  // Sheet 2: Tasks
+  const taskHeaders = ['ลำดับ', 'ขั้นตอนการทำงาน', 'สถานะ', 'เมื่อวันที่', 'ตั้งแต่วันที่', 'ถึงวันที่', 'หมายเหตุ'];
+  const taskRows = [taskHeaders];
+  const allRows = document.querySelectorAll('#taskBody tr[id^="row_"]');
+  allRows.forEach(row => {
+    const rowId = row.id.replace('row_', '');
+    const numEl = row.querySelector('.task-num');
+    const nameEl = row.querySelector('.task-name, .task-name-sub, .task-name-user');
+    const statusEl = row.querySelector('select');
+    const single = row.querySelector('[data-field="single"]');
+    const start = row.querySelector('[data-field="start"]');
+    const end = row.querySelector('[data-field="end"]');
+    const remark = row.querySelector('[data-field="remark"]');
+    taskRows.push([
+      numEl ? numEl.textContent : '',
+      nameEl ? nameEl.textContent : '',
+      statusEl ? statusEl.value : '',
+      single ? toThaiDate(single.value) : '',
+      start ? toThaiDate(start.value) : '',
+      end ? toThaiDate(end.value) : '',
+      remark ? remark.value : ''
+    ]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(taskRows);
+  ws2['!cols'] = [{wch:8},{wch:45},{wch:10},{wch:14},{wch:14},{wch:14},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'ขั้นตอนการทำงาน');
+
+  XLSX.writeFile(wb, `TrackingLog_${sanitizeFilename(data.name || 'project')}.xlsx`);
+  showToast('Export Excel เรียบร้อย', 'success');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+// ============================================================
+// FLATPICKR ENGINE
+// ============================================================
+const THAI_MONTHS_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const THAI_MONTHS_SHORT2 = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+const FP_LOCALE = {
+  weekdays: {
+    shorthand: ['อา','จ','อ','พ','พฤ','ศ','ส'],
+    longhand: ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']
+  },
+  months: {
+    shorthand: THAI_MONTHS_SHORT2,
+    longhand: THAI_MONTHS_FULL
+  },
+  firstDayOfWeek: 0,
+  ordinal: () => '',
+  rangeSeparator: ' - ',
+  weekAbbreviation: 'สปด.',
+  scrollTitle: 'เลื่อนเพื่อเพิ่ม',
+  toggleTitle: 'คลิกเพื่อสลับ',
+  amPM: ['AM', 'PM'],
+  yearAriaLabel: 'ปี',
+  time_24hr: true
+};
+
+// Store Flatpickr instances for form-level date fields
+const fpInstances = {};
+
+function formatThaiShort(dateObj) {
+  if (!dateObj) return '';
+  const d = dateObj.getDate();
+  const m = THAI_MONTHS_SHORT2[dateObj.getMonth()];
+  const y = (dateObj.getFullYear() + 543).toString().slice(-2);
+  return `${d} ${m} ${y}`;
+}
+
+function isoFromDate(dateObj) {
+  if (!dateObj) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Initialize Flatpickr on a form-level input (considerDate, submitDate, etc.)
+function initFormFp(inputId, onChangeCb) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  if (fpInstances[inputId]) { fpInstances[inputId].destroy(); }
+  fpInstances[inputId] = flatpickr(el, {
+    locale: FP_LOCALE,
+    dateFormat: 'Y-m-d',
+    allowInput: false,
+    disableMobile: true,
+    onReady(selectedDates, dateStr, instance) {
+      // Show Thai format in the input
+      if (selectedDates[0]) {
+        instance.input.value = formatThaiShort(selectedDates[0]);
+        instance.input.dataset.iso = isoFromDate(selectedDates[0]);
+      }
+    },
+    onChange(selectedDates, dateStr, instance) {
+      if (selectedDates[0]) {
+        instance.input.value = formatThaiShort(selectedDates[0]);
+        instance.input.dataset.iso = isoFromDate(selectedDates[0]);
+      } else {
+        instance.input.value = '';
+        instance.input.dataset.iso = '';
+      }
+      if (onChangeCb) onChangeCb(instance.input);
+    }
+  });
+}
+
+// Initialize Flatpickr on a task-table text input
+function initTaskFp(inputEl) {
+  if (!inputEl || inputEl._fp) return;
+  inputEl._fp = flatpickr(inputEl, {
+    locale: FP_LOCALE,
+    dateFormat: 'Y-m-d',
+    allowInput: false,
+    disableMobile: true,
+    onReady(selectedDates, dateStr, instance) {
+      if (selectedDates[0]) {
+        instance.input.value = formatThaiShort(selectedDates[0]);
+        instance.input.dataset.iso = isoFromDate(selectedDates[0]);
+      }
+    },
+    onChange(selectedDates, dateStr, instance) {
+      const el = instance.input;
+      if (selectedDates[0]) {
+        el.value = formatThaiShort(selectedDates[0]);
+        el.dataset.iso = isoFromDate(selectedDates[0]);
+      } else {
+        el.value = '';
+        el.dataset.iso = '';
+      }
+      const rowId = el.dataset.row;
+      const field = el.dataset.field;
+      if (rowId) {
+        if (field === 'start' || field === 'end') validateDateRange(rowId);
+        saveRowData(rowId);
+      }
+      updateDashboard();
+    }
+  });
+}
+
+// Initialize Flatpickr on all .fp-task inputs currently in DOM
+function initAllTaskFp() {
+  document.querySelectorAll('.fp-task').forEach(el => {
+    if (!el._fp) initTaskFp(el);
+  });
+}
+
+// ============================================================
+// DELETE PROJECT
+// ============================================================
+async function deleteProject(id) {
+  if (!confirm('ยืนยันการลบโครงการนี้?')) return;
+  showLoading('กำลังลบ...');
+  const res = await apiCall('delete', { id });
+  hideLoading();
+  if (res.ok) {
+    projects = projects.filter(p => p.id !== id);
+    renderProjects();
+    showToast('ลบโครงการแล้ว', 'success');
+  } else {
+    showToast('ลบไม่สำเร็จ: ' + (res.error || ''), 'error');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  // Init form Flatpickr
+  initFormFp('considerDate', () => updateDashboard());
+  initFormFp('docReceiveStart', () => validateDocDateRange());
+  initFormFp('docReceiveEnd', () => validateDocDateRange());
+  initFormFp('submitDate', () => updateDashboard());
+
+  // Load from Google Sheets
+  await loadAllProjects();
+  renderProjects();
+});
+</script>
+</body>
+</html>
