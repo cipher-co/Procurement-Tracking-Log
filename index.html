@@ -801,7 +801,7 @@
 // ============================================================
 // CONFIG — ใส่ Web App URL จาก Apps Script ตรงนี้
 // ============================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlqP-mXZh-Iacgm71uyRcjrT6VcgW_Hb963cvA4cujiMAEiQpaetEfDrPJL2Qlgzkd/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVFiNRJEaBh-qNAEPLcb7hf0858kMBXsAokFXJqB0fv2OZvOAldv8HXLX-1m45Hqti/exec';
 
 // ============================================================
 // DATA (in-memory cache, synced from Google Sheets)
@@ -813,23 +813,13 @@ let _isLoading = false;
 // ── API helpers ────────────────────────────────────────────────
 async function apiCall(action, payload = {}) {
   try {
-    if (action === 'save') {
-      // POST สำหรับ save (data ใหญ่เกิน URL limit)
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action, project: payload }),
-      });
-      const text = await res.text();
-      return JSON.parse(text);
-    } else {
-      // GET สำหรับ action อื่น
-      let url = `${SCRIPT_URL}?action=${action}`;
-      if (payload.id) url += `&id=${encodeURIComponent(payload.id)}`;
-      const res = await fetch(url);
-      const text = await res.text();
-      return JSON.parse(text);
-    }
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    const text = await res.text();
+    return JSON.parse(text);
   } catch(e) {
     return { ok: false, error: e.toString() };
   }
