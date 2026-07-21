@@ -101,12 +101,9 @@
   .badge-green { background: #dcfce7; color: #166534; }
   .badge-orange { background: #ffedd5; color: #9a3412; }
   .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-purple { background: #ede9fe; color: #6b21a8; }
   .project-card-meta { display: flex; gap: 24px; font-size: 12px; color: var(--gray-500); }
   .project-card-meta span { display: flex; align-items: center; gap: 4px; }
-  .project-card-progress { margin-top: 12px; }
-  .progress-bar-wrap { background: var(--gray-100); border-radius: 4px; height: 5px; }
-  .progress-bar-fill { background: linear-gradient(to right, #4481eb 0%, #04befe 100%);
-    border-radius: 4px; height: 5px; transition: width 0.5s ease; }
 
   /* FORM PAGE */
   .page-form { padding: 28px 32px; max-width: 1300px; margin: 0 auto; }
@@ -259,7 +256,7 @@
   .dash-badge-warning { background: rgba(234,88,12,0.10);  color: #c2410c; border: 1px solid rgba(234,88,12,0.2); }
   .dash-badge-danger  { background: rgba(220,38,38,0.10);  color: #b91c1c; border: 1px solid rgba(220,38,38,0.2); }
 
-  /* Progress strip — glass */
+  /* Status Badge Strip */
   .dash-progress {
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(16px) saturate(1.5);
@@ -271,28 +268,17 @@
     box-shadow: 0 4px 20px rgba(31,38,135,0.05), 0 1px 0 rgba(255,255,255,0.8) inset;
     position: relative; z-index: 1;
   }
-  .dash-progress-header {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 13px; margin-bottom: 10px;
-    color: #3a3a3c; font-weight: 600;
+
+  /* Status Badge styles */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 99px;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.2px;
   }
-  .dash-progress-pct {
-    font-size: 14px; font-weight: 800;
-    background: linear-gradient(135deg, #4481eb, #04befe);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .dash-progress-bar {
-    background: rgba(68,129,235,0.10);
-    border-radius: 99px; height: 7px; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.5);
-  }
-  .dash-progress-fill {
-    background: linear-gradient(to right, #4481eb 0%, #04befe 100%);
-    border-radius: 99px; height: 100%;
-    transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow: 0 0 10px rgba(68,129,235,0.35);
-  }
+  .status-badge.status-waiting   { background: #f1f5f9; color: #64748b; border: 1.5px solid #cbd5e1; }
+  .status-badge.status-active    { background: #dbeafe; color: #1e40af; border: 1.5px solid #93c5fd; }
+  .status-badge.status-done      { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+  .status-badge.status-cancelled { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
 
   /* Bottom row: progress + alert side by side */
   .dash-bottom-row {
@@ -660,14 +646,11 @@
 
       </div>
 
-      <!-- Progress Bar -->
-      <div class="dash-progress">
-        <div class="dash-progress-header">
-          <span>ความคืบหน้าขั้นตอนการทำงาน (งานหลัก <span id="dashCompleted">0/14</span>)</span>
-          <span class="dash-progress-pct" id="dashProgressPct">0%</span>
-        </div>
-        <div class="dash-progress-bar">
-          <div class="dash-progress-fill" id="dashProgressBar" style="width:0%"></div>
+      <!-- Status Badge Section (แทน Progress Bar) -->
+      <div class="dash-progress" id="dashStatusSection">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <span style="font-size:13px;font-weight:600;color:#3a3a3c">สถานะโครงการ</span>
+          <div id="dashStatusBadge"></div>
         </div>
       </div>
 
@@ -713,7 +696,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">อำนาจอนุมัติ <span class="required">*</span></label>
-            <select class="form-input" id="approveAuth">
+            <select class="form-input" id="approveAuth" onchange="updateTask6Name()">
               <option value="">เลือกผู้มีอำนาจ</option>
               <option>เข้าบอร์ด (ผอญ. ลงนามแทน)</option>
               <option>กอญ.</option><option>รญว.</option><option>รญท.ผสภ.</option>
@@ -1132,15 +1115,28 @@ function buildRowHTML(task, isSub, isUser, rowId) {
       </td>`
     : `<td></td>`;
 
+  // Task 6 — ชื่อ dynamic ดึงจาก approveAuth dropdown
+  const approveVal = document.getElementById('approveAuth')?.value || '........';
+  const displayName = (task.num === '6')
+    ? `อนุมัติโดย ${approveVal} เมื่อวันที่`
+    : task.name;
+
   return `
     ${numCell}
-    <td style="${indent}"><span class="${nameClass}">${task.name}</span></td>
+    <td style="${indent}"><span class="${nameClass}" ${task.num === '6' ? 'id="task6NameDisplay"' : ''}>${displayName}</span></td>
     ${statusCell}
     ${singleCell}
     ${startCell}
     ${endCell}
     ${remarkCell}
     ${actionCell}`;
+}
+
+// อัปเดตชื่อ task 6 ทุกครั้งที่ approveAuth เปลี่ยน
+function updateTask6Name() {
+  const approveVal = document.getElementById('approveAuth')?.value || '........';
+  const el = document.getElementById('task6NameDisplay');
+  if (el) el.textContent = `อนุมัติโดย ${approveVal} เมื่อวันที่`;
 }
 
 function buildUserSubHTML(task, rowId, parentNum) {
@@ -1502,18 +1498,53 @@ function updateDashboard() {
     alertBox.innerHTML = '';
   }
 
-  // ── Progress ─────────────────────────────────────────────────
-  const allMainTasks = document.querySelectorAll('tr.task-main');
-  let completed = 0;
-  allMainTasks.forEach(row => {
-    const singleInput = row.querySelector('[data-field="single"]');
-    if (singleInput && (singleInput.dataset.iso || singleInput.value)) completed++;
-  });
-  const total = TASK_DEFINITIONS.length;
-  const pct = Math.round((completed / total) * 100);
-  document.getElementById('dashCompleted').textContent = completed + '/' + total;
-  document.getElementById('dashProgressPct').textContent = isCancelled ? 'ยกเลิก' : pct + '%';
-  document.getElementById('dashProgressBar').style.width = pct + '%';
+  // ── Status Badge ──────────────────────────────────────────────
+  const statusBadgeEl = document.getElementById('dashStatusBadge');
+  if (statusBadgeEl) {
+    let badgeHTML = '';
+    if (isCancelled) {
+      // ยกเลิก — remark 10.4 มีคำว่า "ยกเลิก"
+      badgeHTML = `<span class="status-badge status-cancelled">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        ยกเลิก — สิ้นสุดที่ขั้นตอน 10
+      </span>`;
+    } else {
+      // ตรวจ task 14 (ส่งงานสัญญา) ว่ามีวันที่ = เสร็จสิ้น
+      const task14row = document.getElementById('row_task_14');
+      const task14date = task14row?.querySelector('[data-field="single"]');
+      const isDone = task14date && (task14date.dataset.iso || task14date.value);
+
+      // นับ task หลักที่มีวันที่
+      const allMainTasks = document.querySelectorAll('tr.task-main');
+      let completed = 0;
+      allMainTasks.forEach(row => {
+        const s = row.querySelector('[data-field="single"]');
+        if (s && (s.dataset.iso || s.value)) completed++;
+      });
+      const total = TASK_DEFINITIONS.length;
+
+      if (isDone) {
+        // เสร็จสิ้น
+        badgeHTML = `<span class="status-badge status-done">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          เสร็จสิ้น (${completed}/${total} ขั้นตอนหลัก)
+        </span>`;
+      } else if (completed > 0) {
+        // กำลังดำเนินการ
+        badgeHTML = `<span class="status-badge status-active">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          อยู่ระหว่างดำเนินการ (${completed}/${total} ขั้นตอนหลัก)
+        </span>`;
+      } else {
+        // รอดำเนินการ
+        badgeHTML = `<span class="status-badge status-waiting">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          รอดำเนินการ
+        </span>`;
+      }
+    }
+    statusBadgeEl.innerHTML = badgeHTML;
+  }
 }
 
 // ============================================================
@@ -1726,22 +1757,57 @@ function projectCardHTML(p) {
   const diff = submit ? Math.ceil((submit - today) / 86400000) : null;
 
   let badgeClass = 'badge-blue', badgeText = p.procureMethod || 'ไม่ระบุวิธี';
-  if (p.procureMethod === 'เฉพาะเจาะจง') { badgeClass = 'badge-green'; }
-  else if (p.procureMethod === 'คัดเลือก') { badgeClass = 'badge-orange'; }
+  if (p.procureMethod === 'เฉพาะเจาะจง')                          { badgeClass = 'badge-green'; }
+  else if (p.procureMethod === 'คัดเลือก')                         { badgeClass = 'badge-orange'; }
+  else if (p.procureMethod === 'ประกวดราคาอิเล็คทรอนิกส์ e-Bidding') { badgeClass = 'badge-purple'; }
+  else if (p.procureMethod === 'ประกาศเชิญชวนทั่วไป')              { badgeClass = 'badge-blue'; }
 
+  // ── ตรวจสอบสถานะยกเลิก (declare ก่อนใช้) ───────────────────
+  const tasks = p.tasks || {};
+  const task104 = tasks['task_10_4'];
+  const isCancelled = task104 && (task104.remark || '').includes('ยกเลิก');
+
+  // deadlineBadge: Overdue/Upcoming เท่านั้น (ยกเลิก → statusBadge จัดการ)
   let deadlineBadge = '';
-  if (diff !== null) {
+  if (!isCancelled && diff !== null) {
     if (diff < 0) deadlineBadge = `<span class="deadline-badge overdue">Overdue</span>`;
     else if (diff <= 3) deadlineBadge = `<span class="deadline-badge upcoming">Upcoming</span>`;
   }
 
-  const taskCount = Object.values(p.tasks || {}).filter(t => t.single || t.start).length;
-  const progress = Math.min(100, Math.round((taskCount / 14) * 100));
+  // ── Status Badge logic ────────────────────────────────────────
+  const task14 = tasks['task_14'] || tasks['task_task_14'];
+  const isDone = task14 && (task14.single || task14.start);
+
+  const mainTaskKeys = ['task_1','task_2','task_3','task_4','task_5','task_6','task_7',
+    'task_8','task_9','task_10','task_11','task_12','task_13','task_14'];
+  const completedCount = mainTaskKeys.filter(k => {
+    const t = tasks[k]; return t && (t.single || t.start);
+  }).length;
+
+  let statusBadge = '';
+  if (isCancelled) {
+    statusBadge = `<span class="status-badge status-cancelled" style="font-size:11px;padding:4px 10px">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      ยกเลิก</span>`;
+  } else if (isDone) {
+    statusBadge = `<span class="status-badge status-done" style="font-size:11px;padding:4px 10px">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      เสร็จสิ้น</span>`;
+  } else if (completedCount > 0) {
+    statusBadge = `<span class="status-badge status-active" style="font-size:11px;padding:4px 10px">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      อยู่ระหว่างดำเนินการ ${completedCount}/14</span>`;
+  } else {
+    statusBadge = `<span class="status-badge status-waiting" style="font-size:11px;padding:4px 10px">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      รอดำเนินการ</span>`;
+  }
 
   return `<div class="project-card" onclick="showPage('form','${p.id}')">
     <div class="project-card-header">
       <div class="project-card-title">${p.name || 'ไม่มีชื่อโครงการ'}</div>
-      <div style="display:flex;gap:6px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        ${statusBadge}
         ${deadlineBadge}
         <span class="badge ${badgeClass}">${shortenMethod(badgeText)}</span>
       </div>
@@ -1754,16 +1820,12 @@ function projectCardHTML(p) {
       ${p.approveAuth ? `<span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.approveAuth}</span>` : ''}
       ${submit ? `<span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${toThaiDate(p.submitDate)}</span>` : ''}
     </div>
-    <div class="project-card-progress">
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
-    </div>
   </div>`;
 }
 
 function shortenMethod(m) {
   if (m === 'ประกวดราคาอิเล็คทรอนิกส์ e-Bidding') return 'e-Bidding';
-  if (m === 'ประกาศเชิญชวนทั่วไป') return 'เชิญชวนทั่วไป';
-  return m;
+  return m || 'ไม่ระบุวิธี';
 }
 
 function filterProjects(val) {
